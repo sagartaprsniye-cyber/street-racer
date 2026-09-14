@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Street Racer</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+body{
+  background:#111;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
+  overflow:hidden;
+}
+
+h1{
+  font-size:28px;
+  margin:8px 0 2px;
+}
+
+#score{
+  font-size:20px;
+  margin-bottom:6px;
+}
+
+#game{
+  position:relative;
+  width:340px;
+  height:570px;
+  max-width:94vw;
+  margin:auto;
+  overflow:hidden;
+  background:#292929;
+  border-left:8px solid #eee;
+  border-right:8px solid #eee;
+  border-radius:8px;
+}
+
+/* ROAD */
+
+.roadLine{
+  position:absolute;
+  width:6px;
+  height:70px;
+  background:white;
+  left:50%;
+  transform:translateX(-50%);
+}
+
+.r1{top:-80px}
+.r2{top:70px}
+.r3{top:220px}
+.r4{top:370px}
+.r5{top:520px}
+
+/* CAR */
+
+.car{
+  position:absolute;
+  width:58px;
+  height:102px;
+  z-index:10;
+}
+
+/* wheels */
+
+.car .wheel{
+  position:absolute;
+  width:9px;
+  height:27px;
+  background:#090909;
+  border-radius:5px;
+  z-index:1;
+}
+
+.car .w1{left:-5px;top:18px}
+.car .w2{right:-5px;top:18px}
+.car .w3{left:-5px;bottom:18px}
+.car .w4{right:-5px;bottom:18px}
+
+/* body */
+
+.car .body{
+  position:absolute;
+  left:4px;
+  top:0;
+  width:50px;
+  height:102px;
+  border-radius:18px 18px 13px 13px;
+  box-shadow:0 5px 12px #000;
+}
+
+/* PLAYER CAR */
+
+#player .body{
+  background:linear-gradient(
+    90deg,
+    #850000,
+    #ed1111 25%,
+    #ff3b3b 50%,
+    #d00000 75%,
+    #700000
+  );
+}
+
+/* ENEMY CAR */
+
+.enemy .body{
+  background:linear-gradient(
+    90deg,
+    #a85d00,
+    #f5a900 25%,
+    #ffd52b 50%,
+    #e28a00 75%,
+    #8a4c00
+  );
+}
+
+/* WINDOWS */
+
+.car .window1{
+  position:absolute;
+  left:11px;
+  top:12px;
+  width:36px;
+  height:27px;
+  background:linear-gradient(135deg,#8fdcff,#17242b);
+  border:2px solid #333;
+  border-radius:10px 10px 5px 5px;
+  z-index:3;
+}
+
+.car .window2{
+  position:absolute;
+  left:11px;
+  bottom:14px;
+  width:36px;
+  height:24px;
+  background:#111820;
+  border:2px solid #333;
+  border-radius:5px 5px 9px 9px;
+  z-index:3;
+}
+
+/* CENTER STRIPE */
+
+.car .stripe{
+  position:absolute;
+  left:26px;
+  top:0;
+  width:6px;
+  height:102px;
+  background:rgba(255,255,255,.18);
+  z-index:4;
+}
+
+/* LIGHTS */
+
+.car .light1,
+.car .light2{
+  position:absolute;
+  width:8px;
+  height:8px;
+  background:#fff6a0;
+  border-radius:50%;
+  top:5px;
+  z-index:5;
+  box-shadow:0 0 8px #fff;
+}
+
+.car .light1{left:10px}
+.car .light2{right:10px}
+
+/* CONTROLS */
+
+#controls{
+  position:fixed;
+  bottom:18px;
+  left:50%;
+  transform:translateX(-50%);
+  width:94%;
+  max-width:340px;
+  display:flex;
+  gap:12px;
+  z-index:100;
+}
+
+#controls button{
+  flex:1;
+  height:58px;
+  border:2px solid white;
+  border-radius:16px;
+  background:#222;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+}
+
+#controls button:active{
+  transform:scale(.94);
+  background:#555;
+}
+
+/* GAME OVER */
+
+#gameOver{
+  display:none;
+  position:absolute;
+  z-index:50;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:85%;
+  padding:25px 15px;
+  background:rgba(0,0,0,.94);
+  border-radius:20px;
+  border:2px solid white;
+}
+
+#gameOver h2{
+  font-size:30px;
+  margin-bottom:10px;
+}
+
+#restart{
+  margin-top:15px;
+  width:100%;
+  padding:13px;
+  border:0;
+  border-radius:12px;
+  background:#e00000;
+  color:white;
+  font-size:20px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏁 Street Racer</h1>
+
+<div id="score">Score: 0</div>
+
+<div id="game">
+
+  <!-- ROAD LINES -->
+
+  <div class="roadLine r1"></div>
+  <div class="roadLine r2"></div>
+  <div class="roadLine r3"></div>
+  <div class="roadLine r4"></div>
+  <div class="roadLine r5"></div>
+
+
+  <!-- PLAYER CAR -->
+
+  <div id="player" class="car">
+
+    <div class="wheel w1"></div>
+    <div class="wheel w2"></div>
+    <div class="wheel w3"></div>
+    <div class="wheel w4"></div>
+
+    <div class="body"></div>
+
+    <div class="window1"></div>
+    <div class="window2"></div>
+
+    <div class="stripe"></div>
+
+    <div class="light1"></div>
+    <div class="light2"></div>
+
+  </div>
+
+
+  <!-- ENEMY 1 -->
+
+  <div id="enemy1" class="car enemy">
+
+    <div class="wheel w1"></div>
+    <div class="wheel w2"></div>
+    <div class="wheel w3"></div>
+    <div class="wheel w4"></div>
+
+    <div class="body"></div>
+
+    <div class="window1"></div>
+    <div class="window2"></div>
+
+    <div class="stripe"></div>
+
+  </div>
+
+
+  <!-- ENEMY 2 -->
+
+  <div id="enemy2" class="car enemy">
+
+    <div class="wheel w1"></div>
+    <div class="wheel w2"></div>
+    <div class="wheel w3"></div>
+    <div class="wheel w4"></div>
+
+    <div class="body"></div>
+
+    <div class="window1"></div>
+    <div class="window2"></div>
+
+    <div class="stripe"></div>
+
+  </div>
+
+
+  <!-- GAME OVER -->
+
+  <div id="gameOver">
+
+    <h2>💥 GAME OVER</h2>
+
+    <p id="finalScore">Score: 0</p>
+
+    <button id="restart">
+      🔄 RESTART
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- CONTROLS -->
+
+<div id="controls">
+
+  <button id="left">
+    ⬅️ LEFT
+  </button>
+
+  <button id="right">
+    RIGHT ➡️
+  </button>
+
+</div>
+
+
+<script>
+
+const player = document.getElementById("player");
+const enemy1 = document.getElementById("enemy1");
+const enemy2 = document.getElementById("enemy2");
+
+const scoreBox = document.getElementById("score");
+const gameOver = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+
+
+/* LANES */
+
+const lanes = [38,141,244];
+
+
+/* PLAYER POSITION */
+
+/* 🔴 लाल वाली कार को नीचे किया गया है */
+
+let playerX = 141;
+let playerY = 450;
+
+
+/* ENEMY POSITION */
+
+let enemy1Y = -130;
+let enemy2Y = -430;
+
+let enemy1X = lanes[0];
+let enemy2X = lanes[2];
+
+
+/* GAME SETTINGS */
+
+let score = 0;
+let speed = 4.5;
+let running = true;
+
+
+/* PLAYER LEFT */
+
+function left(){
+
+  if(!running) return;
+
+  playerX -= 20;
+
+  if(playerX < 25){
+    playerX = 25;
+  }
+
+  player.style.left = playerX + "px";
+}
+
+
+/* PLAYER RIGHT */
+
+function right(){
+
+  if(!running) return;
+
+  playerX += 20;
+
+  if(playerX > 257){
+    playerX = 257;
+  }
+
+  player.style.left = playerX + "px";
+}
+
+
+/* TOUCH BUTTONS */
+
+document.getElementById("left").addEventListener(
+  "touchstart",
+  function(e){
+
+    e.preventDefault();
+
+    left();
+
+  },
+  {passive:false}
+);
+
+
+document.getElementById("right").addEventListener(
+  "touchstart",
+  function(e){
+
+    e.preventDefault();
+
+    right();
+
+  },
+  {passive:false}
+);
+
+
+/* CLICK BUTTONS */
+
+document.getElementById("left")
+.addEventListener("click",left);
+
+document.getElementById("right")
+.addEventListener("click",right);
+
+
+/* KEYBOARD */
+
+document.addEventListener(
+  "keydown",
+  function(e){
+
+    if(e.key === "ArrowLeft"){
+      left();
+    }
+
+    if(e.key === "ArrowRight"){
+      right();
+    }
+
+  }
+);
+
+
+/* COLLISION */
+
+function hit(a,b){
+
+  const A = a.getBoundingClientRect();
+  const B = b.getBoundingClientRect();
+
+  return !(
+    A.right < B.left + 8 ||
+    A.left + 8 > B.right ||
+    A.bottom < B.top + 8 ||
+    A.top + 8 > B.bottom
+  );
+}
+
+
+/* NEW RANDOM LANE */
+
+function newLane(){
+
+  return lanes[
+    Math.floor(
+      Math.random() * lanes.length
+    )
+  ];
+
+}
+
+
+/* GAME LOOP */
+
+function gameLoop(){
+
+  if(!running) return;
+
+
+  /* ENEMY 1 */
+
+  enemy1Y += speed;
+
+  if(enemy1Y > 590){
+
+    enemy1Y = -120;
+
+    enemy1X = newLane();
+
+    score++;
+
+    scoreBox.innerText =
+      "Score: " + score;
+
+
+    if(score % 5 === 0){
+
+      speed += 0.4;
+
+    }
+
+  }
+
+
+  enemy1.style.top =
+    enemy1Y + "px";
+
+  enemy1.style.left =
+    enemy1X + "px";
+
+
+  /* ENEMY 2 */
+
+  enemy2Y += speed;
+
+  if(enemy2Y > 590){
+
+    enemy2Y = -350;
+
+    enemy2X = newLane();
+
+    score++;
+
+    scoreBox.innerText =
+      "Score: " + score;
+
+  }
+
+
+  enemy2.style.top =
+    enemy2Y + "px";
+
+  enemy2.style.left =
+    enemy2X + "px";
+
+
+  /* ROAD LINES */
+
+  document
+  .querySelectorAll(".roadLine")
+  .forEach(function(line){
+
+    let y =
+      parseInt(
+        getComputedStyle(line).top
+      );
+
+    y += speed;
+
+    if(y > 570){
+
+      y = -80;
+
+    }
+
+    line.style.top =
+      y + "px";
+
+  });
+
+
+  /* COLLISION */
+
+  if(
+    hit(player,enemy1) ||
+    hit(player,enemy2)
+  ){
+
+    endGame();
+
+    return;
+
+  }
+
+
+  requestAnimationFrame(gameLoop);
+
+}
+
+
+/* GAME OVER */
+
+function endGame(){
+
+  running = false;
+
+  finalScore.innerText =
+    "Your Score: " + score;
+
+  gameOver.style.display =
+    "block";
+
+}
+
+
+/* RESTART */
+
+document
+.getElementById("restart")
+.addEventListener(
+  "click",
+  function(){
+
+    location.reload();
+
+  }
+);
+
+
+/* START GAME */
+
+
+/* 🔴 PLAYER CAR नीचे */
+
+player.style.left =
+  playerX + "px";
+
+player.style.top =
+  playerY + "px";
+
+
+/* ENEMY START */
+
+enemy1.style.left =
+  enemy1X + "px";
+
+enemy2.style.left =
+  enemy2X + "px";
+
+enemy1.style.top =
+  enemy1Y + "px";
+
+enemy2.style.top =
+  enemy2Y + "px";
+
+
+/* START */
+
+gameLoop();
+
+</script>
+
+</body>
+</html>
